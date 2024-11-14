@@ -1,25 +1,38 @@
-import logo from './logo.svg';
-import './App.css';
+import React, { useState, useEffect } from "react";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import PerfumeForm from "./Componentes/PerfumeForm";
+import { getPerfumes } from "./localStorage";
 
-function App() {
+const App = () => {
+  const [perfumes, setPerfumes] = useState([]);
+  const [editingPerfume, setEditingPerfume] = useState(null);
+
+  useEffect(() => {
+    const storedPerfumes = getPerfumes();
+    setPerfumes(storedPerfumes);
+  }, []);
+
+  const handleSubmitSuccess = () => {
+    const storedPerfumes = getPerfumes();
+    setPerfumes(storedPerfumes);
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <Routes>
+        <Route
+          path="/cadastrar-perfume"
+          element={
+            <PerfumeForm
+              onSubmitSuccess={handleSubmitSuccess}
+              editingPerfume={editingPerfume}
+              setEditingPerfume={setEditingPerfume}
+            />
+          }
+        />
+      </Routes>
+    </Router>
   );
-}
+};
 
 export default App;
