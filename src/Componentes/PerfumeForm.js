@@ -46,6 +46,12 @@ const FieldContainer = styled.div`
   }
 `;
 
+const ErrorText = styled.div`
+  color: red;
+  font-size: 12px;
+  margin-top: 5px;
+`;
+
 const Button = styled.button`
   padding: 10px;
   border: none;
@@ -64,7 +70,7 @@ const PerfumeForm = ({ onSubmitSuccess, editingPerfume, setEditingPerfume }) => 
 
   useEffect(() => {
     const storedPerfumes = getPerfumes();
-    setPerfumes(storedPerfumes);
+    setPerfumes(storedPerfumes || []);
   }, []);
 
   const validationSchema = Yup.object({
@@ -72,25 +78,31 @@ const PerfumeForm = ({ onSubmitSuccess, editingPerfume, setEditingPerfume }) => 
     marca: Yup.string().required("Marca é obrigatória"),
     preco: Yup.number().required("Preço é obrigatório"),
     quantidade: Yup.number().required("Quantidade é obrigatória"),
-    dataFabricacao: Yup.date().required("Data de Fabricação é obrigatória"),
-    dataValidade: Yup.date().required("Data de Validade é obrigatória"),
+    dataFabricacao: Yup.string().required("Data de Fabricação é obrigatória"),
+    dataValidade: Yup.string().required("Data de Validade é obrigatória"),
     imagem: Yup.string()
       .url("URL da imagem inválida")
       .required("URL da imagem é obrigatória"),
   });
 
   const handleSubmit = (values, { resetForm }) => {
+    const formattedValues = {
+      ...values,
+      dataFabricacao: values.dataFabricacao.replace(/\//g, "-"),
+      dataValidade: values.dataValidade.replace(/\//g, "-"),
+    };
+
     if (editingPerfume) {
       const updatedPerfumes = perfumes.map((perfume) =>
         perfume.id === editingPerfume.id
-          ? { ...values, id: editingPerfume.id }
+          ? { ...formattedValues, id: editingPerfume.id }
           : perfume
       );
       setPerfumes(updatedPerfumes);
       savePerfumes(updatedPerfumes);
       setEditingPerfume(null);
     } else {
-      const newPerfume = { ...values, id: Date.now() };
+      const newPerfume = { ...formattedValues, id: Date.now() };
       const updatedPerfumes = [...perfumes, newPerfume];
       setPerfumes(updatedPerfumes);
       savePerfumes(updatedPerfumes);
@@ -99,8 +111,10 @@ const PerfumeForm = ({ onSubmitSuccess, editingPerfume, setEditingPerfume }) => 
     onSubmitSuccess();
   };
 
-
   const handleDelete = (id) => {
+    const confirmDelete = window.confirm("Deseja realmente excluir este perfume?");
+    if (!confirmDelete) return;
+
     const updatedPerfumes = perfumes.filter((perfume) => perfume.id !== id);
     setPerfumes(updatedPerfumes);
     savePerfumes(updatedPerfumes);
@@ -127,28 +141,29 @@ const PerfumeForm = ({ onSubmitSuccess, editingPerfume, setEditingPerfume }) => 
           }
           validationSchema={validationSchema}
           onSubmit={handleSubmit}
+          enableReinitialize
         >
-          {({ setFieldValue }) => (
+          {() => (
             <StyledForm>
               <FieldContainer>
                 <label>Nome</label>
                 <Field name="nome" type="text" />
-                <ErrorMessage name="nome" component={Error} />
+                <ErrorMessage name="nome" component={ErrorText} />
               </FieldContainer>
               <FieldContainer>
                 <label>Marca</label>
                 <Field name="marca" type="text" />
-                <ErrorMessage name="marca" component={Error} />
+                <ErrorMessage name="marca" component={ErrorText} />
               </FieldContainer>
               <FieldContainer>
                 <label>Preço</label>
                 <Field name="preco" type="text" />
-                <ErrorMessage name="preco" component={Error} />
+                <ErrorMessage name="preco" component={ErrorText} />
               </FieldContainer>
               <FieldContainer>
                 <label>Quantidade</label>
                 <Field name="quantidade" type="number" />
-                <ErrorMessage name="quantidade" component={Error} />
+                <ErrorMessage name="quantidade" component={ErrorText} />
               </FieldContainer>
               <FieldContainer>
                 <label>Data de Fabricação</label>
@@ -159,7 +174,7 @@ const PerfumeForm = ({ onSubmitSuccess, editingPerfume, setEditingPerfume }) => 
                     </InputMask>
                   )}
                 </Field>
-                <ErrorMessage name="dataFabricacao" component={Error} />
+                <ErrorMessage name="dataFabricacao" component={ErrorText} />
               </FieldContainer>
               <FieldContainer>
                 <label>Data de Validade</label>
@@ -170,12 +185,12 @@ const PerfumeForm = ({ onSubmitSuccess, editingPerfume, setEditingPerfume }) => 
                     </InputMask>
                   )}
                 </Field>
-                <ErrorMessage name="dataValidade" component={Error} />
+                <ErrorMessage name="dataValidade" component={ErrorText} />
               </FieldContainer>
               <FieldContainer>
                 <label>URL da Imagem</label>
                 <Field name="imagem" type="text" />
-                <ErrorMessage name="imagem" component={Error} />
+                <ErrorMessage name="imagem" component={ErrorText} />
               </FieldContainer>
               <Button type="submit">Salvar</Button>
             </StyledForm>
@@ -183,11 +198,12 @@ const PerfumeForm = ({ onSubmitSuccess, editingPerfume, setEditingPerfume }) => 
         </Formik>
         <PerfumeList
           perfumes={perfumes}
-           onEdit={setEditingPerfume}
+          onEdit={setEditingPerfume}
           onDelete={handleDelete}
         />
       </Container>
     </>
   );
 };
+
 export default PerfumeForm;
